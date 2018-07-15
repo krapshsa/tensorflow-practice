@@ -50,6 +50,7 @@ HPARAMS = {
     "batch_size": 128
 }
 
+
 def get_params():
     """Aggregates and returns hyper parameters."""
     hparams = HPARAMS
@@ -60,6 +61,7 @@ def get_params():
     hparams.parse(FLAGS.hparams)
 
     return hparams
+
 
 def make_input_fn(mode, params):
     """Returns an input function to read the dataset."""
@@ -75,6 +77,7 @@ def make_input_fn(mode, params):
         features, labels = iterator.get_next()
         return features, labels
     return _input_fn
+
 
 def make_model_fn():
     """Returns a model function."""
@@ -106,6 +109,7 @@ def make_model_fn():
 
     return _model_fn
 
+
 def experiment_fn(run_config, hparams):
     """Constructs an experiment object."""
     estimator = tf.contrib.learn.Estimator(
@@ -117,6 +121,7 @@ def experiment_fn(run_config, hparams):
         eval_metrics=MODELS[FLAGS.model].eval_metrics(hparams),
         eval_steps=FLAGS.eval_steps,
         min_eval_frequency=FLAGS.eval_frequency)
+
 
 def main(unused_argv):
     """Main entry point."""
@@ -142,6 +147,7 @@ def main(unused_argv):
         run_config=run_config,
         schedule=FLAGS.schedule,
         hparams=get_params())
+
 
 if __name__ == "__main__":
     tf.app.run()

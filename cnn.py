@@ -8,11 +8,13 @@ import tensorflow as tf
 
 FLAGS = tf.flags.FLAGS
 
+
 def get_params():
     """Model params."""
     return {
         "drop_rate": 0.5
     }
+
 
 def model(features, labels, mode, params):
     """CNN classifier model."""
@@ -47,6 +49,7 @@ def model(features, labels, mode, params):
         labels=labels, logits=logits)
 
     return {"predictions": predictions}, loss
+
 
 def eval_metrics(unused_params):
     """Eval metrics."""

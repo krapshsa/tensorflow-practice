@@ -21,11 +21,13 @@ TEST_LABEL_URL = "t10k-labels-idx1-ubyte.gz"
 IMAGE_SIZE = 28
 NUM_CLASSES = 10
 
+
 def get_params():
     """Dataset params."""
     return {
         "num_classes": NUM_CLASSES,
     }
+
 
 def prepare():
     """This function will be called once to prepare the dataset."""
@@ -38,6 +40,7 @@ def prepare():
             TEST_LABEL_URL]:
         if not os.path.exists(LOCAL_DIR + name):
             urllib.request.urlretrieve(REMOTE_URL + name, LOCAL_DIR + name)
+
 
 def read(split):
     """Create an instance of the dataset object."""
@@ -62,6 +65,7 @@ def read(split):
         print("Loaded %d labels." % num)
 
     return tf.data.Dataset.from_tensor_slices((images, labels))
+
 
 def parse(image, label):
     """Parse input record to features and labels."""
