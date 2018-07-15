@@ -43,16 +43,18 @@ def model(features, labels, mode, params):
     logits = tf.layers.dense(features, params.num_classes, activation=None,
                              name="dense_2")
 
-    predictions = tf.argmax(logits, axis=1)
+    predicted_indices = tf.argmax(input=logits, axis=1)
+    probabilities = tf.nn.softmax(logits, name='softmax_tensor')
+    predictions = {
+        'classes': predicted_indices,
+        'probabilities': probabilities
+    }
+
+    eval_metric_ops = {
+        'accuracy': tf.metrics.accuracy(labels, predicted_indices)
+    }
 
     loss = tf.losses.sparse_softmax_cross_entropy(
         labels=labels, logits=logits)
 
-    return {"predictions": predictions}, loss
-
-
-def eval_metrics(unused_params):
-    """Eval metrics."""
-    return {
-        "accuracy": tf.contrib.learn.MetricSpec(tf.metrics.accuracy)
-    }
+    return predictions, eval_metric_ops, loss

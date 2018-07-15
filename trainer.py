@@ -16,14 +16,15 @@ import cnn
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-tf.flags.DEFINE_string("model", "", "Model name.")
-tf.flags.DEFINE_string("dataset", "", "Dataset name.")
+tf.flags.DEFINE_string("model", "cnn", "Model name.")
+tf.flags.DEFINE_string("dataset", "mnist", "Dataset name.")
 tf.flags.DEFINE_string("output_dir", "", "Optional output dir.")
 tf.flags.DEFINE_string("schedule", "train_and_evaluate", "Schedule.")
 tf.flags.DEFINE_string("hparams", "", "Hyper parameters.")
-tf.flags.DEFINE_integer("num_epochs", 5, "Number of training epochs.")
+
 tf.flags.DEFINE_integer("save_summary_steps", 10, "Summary steps.")
 tf.flags.DEFINE_integer("save_checkpoints_steps", 10, "Checkpoint steps.")
+tf.flags.DEFINE_integer('max_steps', 1000, 'max_stp for training.')
 tf.flags.DEFINE_integer("eval_steps", None, "Number of eval steps.")
 tf.flags.DEFINE_integer("eval_frequency", 10, "Eval frequency.")
 
@@ -47,7 +48,8 @@ HPARAMS = {
     "optimizer": "Adam",
     "learning_rate": 0.001,
     "decay_steps": 10000,
-    "batch_size": 128
+    "batch_size": 128,
+    "min_eval_frequency": FLAGS.eval_frequency 
 }
 
 
@@ -68,7 +70,7 @@ def make_input_fn(mode, params):
     def _input_fn():
         dataset = DATASETS[FLAGS.dataset].read(mode)
         if mode == tf.estimator.ModeKeys.TRAIN:
-            dataset = dataset.repeat(FLAGS.num_epochs)
+            dataset = dataset.repeat()
             dataset = dataset.shuffle(params.batch_size * 5)
         dataset = dataset.map(
             DATASETS[FLAGS.dataset].parse, num_parallel_calls=8)
@@ -84,7 +86,7 @@ def make_model_fn():
     def _model_fn(features, labels, mode, params):
         model_fn = MODELS[FLAGS.model].model
         global_step = tf.train.get_or_create_global_step()
-        predictions, loss = model_fn(features, labels, mode, params)
+        predictions, eval_metric_ops, loss = model_fn(features, labels, mode, params)
 
         train_op = None
         if mode == tf.estimator.ModeKeys.TRAIN:
@@ -101,26 +103,14 @@ def make_model_fn():
                 optimizer=params.optimizer,
                 learning_rate_decay_fn=_decay)
 
-        return tf.contrib.learn.ModelFnOps(
+        return tf.estimator.EstimatorSpec(
             mode=mode,
             predictions=predictions,
             loss=loss,
+            eval_metric_ops=eval_metric_ops,
             train_op=train_op)
 
     return _model_fn
-
-
-def experiment_fn(run_config, hparams):
-    """Constructs an experiment object."""
-    estimator = tf.contrib.learn.Estimator(
-        model_fn=make_model_fn(), config=run_config, params=hparams)
-    return tf.contrib.learn.Experiment(
-        estimator=estimator,
-        train_input_fn=make_input_fn(tf.estimator.ModeKeys.TRAIN, hparams),
-        eval_input_fn=make_input_fn(tf.estimator.ModeKeys.EVAL, hparams),
-        eval_metrics=MODELS[FLAGS.model].eval_metrics(hparams),
-        eval_steps=FLAGS.eval_steps,
-        min_eval_frequency=FLAGS.eval_frequency)
 
 
 def main(unused_argv):
@@ -135,18 +125,28 @@ def main(unused_argv):
     session_config = tf.ConfigProto()
     session_config.allow_soft_placement = True
     session_config.gpu_options.allow_growth = True
-    run_config = tf.contrib.learn.RunConfig(
+    run_config = tf.estimator.RunConfig(
         model_dir=model_dir,
         save_summary_steps=FLAGS.save_summary_steps,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
         save_checkpoints_secs=None,
         session_config=session_config)
 
-    tf.contrib.learn.learn_runner.run(
-        experiment_fn=experiment_fn,
-        run_config=run_config,
-        schedule=FLAGS.schedule,
-        hparams=get_params())
+    hparams = get_params()
+    estimator = tf.estimator.Estimator(
+        model_fn=make_model_fn(),
+        config=run_config,
+        params=hparams)
+
+    train_spec = tf.estimator.TrainSpec(
+        input_fn=make_input_fn(tf.estimator.ModeKeys.TRAIN, hparams),
+        max_steps=FLAGS.max_steps)
+
+    eval_spec = tf.estimator.EvalSpec(
+        input_fn=make_input_fn(tf.estimator.ModeKeys.EVAL, hparams),
+        steps=FLAGS.eval_steps)
+
+    tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
 
 
 if __name__ == "__main__":
