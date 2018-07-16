@@ -24,9 +24,10 @@ NUM_CLASSES = 10
 
 def get_params():
     """Dataset params."""
-    return {
+    params =  {
         "num_classes": NUM_CLASSES,
     }
+    return params
 
 
 def prepare():
