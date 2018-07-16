@@ -34,25 +34,30 @@ def prepare():
     """This function will be called once to prepare the dataset."""
     if not os.path.exists(LOCAL_DIR):
         os.makedirs(LOCAL_DIR)
-    for name in [
-            TRAIN_IMAGE_URL,
-            TRAIN_LABEL_URL,
-            TEST_IMAGE_URL,
-            TEST_LABEL_URL]:
-        if not os.path.exists(LOCAL_DIR + name):
-            urllib.request.urlretrieve(REMOTE_URL + name, LOCAL_DIR + name)
+
+    URLs = [
+        TRAIN_IMAGE_URL,
+        TRAIN_LABEL_URL,
+        TEST_IMAGE_URL,
+        TEST_LABEL_URL
+    ]
+    for name in URLs:
+        local_file_path = os.path.join(LOCAL_DIR, name)
+        remote_file_url = urllib.parse.urljoin(REMOTE_URL, name)
+        if not os.path.exists(local_file_path):
+            urllib.request.urlretrieve(remote_file_url)
 
 
 def read(split):
     """Create an instance of the dataset object."""
-    image_urls = {
-        tf.estimator.ModeKeys.TRAIN: TRAIN_IMAGE_URL,
-        tf.estimator.ModeKeys.EVAL: TEST_IMAGE_URL
-    }[split]
-    label_urls = {
-        tf.estimator.ModeKeys.TRAIN: TRAIN_LABEL_URL,
-        tf.estimator.ModeKeys.EVAL: TEST_LABEL_URL
-    }[split]
+    if tf.estimator.ModeKeys.TRAIN == split:
+        image_urls = TRAIN_IMAGE_URL
+        label_urls = TRAIN_LABEL_URL
+    elif tf.estimator.ModeKeys.EVAL == split:
+        image_urls = TEST_IMAGE_URL
+        label_urls = TEST_LABEL_URL
+    else:
+        raise Exception("wrong split: {}".format(split))
 
     with gzip.open(LOCAL_DIR + image_urls, "rb") as f:
         magic, num, rows, cols = struct.unpack(">IIII", f.read(16))
@@ -70,6 +75,7 @@ def read(split):
 
 def parse(image, label):
     """Parse input record to features and labels."""
-    image = tf.to_float(image) / 255.0
-    label = tf.to_int64(label)
-    return {"image": image}, {"label": label}
+    features = tf.to_float(image) / 255.0
+    labels = tf.to_int64(label)
+
+    return features, labels

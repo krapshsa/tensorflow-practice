@@ -20,17 +20,14 @@ def get_params():
 
 def model(features, labels, mode, params):
     """CNN classifier model."""
-    images = features["image"]
-    labels = labels["label"]
 
-    tf.summary.image("images", images)
+    tf.summary.image("images", features)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         drop_rate = params.drop_rate
     else:
         drop_rate = 0.0
 
-    features = images
     for i, filters in enumerate([32, 64, 128]):
         features = tf.layers.conv2d(
             features,
