@@ -24,7 +24,7 @@ NUM_CLASSES = 10
 
 def get_params():
     """Dataset params."""
-    params =  {
+    params = {
         "num_classes": NUM_CLASSES,
     }
     return params
@@ -45,7 +45,7 @@ def prepare():
         local_file_path = os.path.join(LOCAL_DIR, name)
         remote_file_url = urllib.parse.urljoin(REMOTE_URL, name)
         if not os.path.exists(local_file_path):
-            urllib.request.urlretrieve(remote_file_url)
+            urllib.request.urlretrieve(remote_file_url, local_file_path)
 
 
 def read(split):
