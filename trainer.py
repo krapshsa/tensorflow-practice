@@ -16,8 +16,8 @@ import cnn
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-tf.flags.DEFINE_string("model",         "cnn",                 "Model name.")
-tf.flags.DEFINE_string("dataset",       "mnist" ,               "Dataset name.")
+tf.flags.DEFINE_string("model",         "cnn",                  "Model name.")
+tf.flags.DEFINE_string("dataset",       "mnist",                "Dataset name.")
 tf.flags.DEFINE_string("output_dir",    "",                     "Optional output dir.")
 tf.flags.DEFINE_string("schedule",      "train_and_evaluate",   "Schedule.")
 tf.flags.DEFINE_string("hparams",       "",                     "Hyper parameters.")
