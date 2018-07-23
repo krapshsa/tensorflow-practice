@@ -11,8 +11,8 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-import datasets.mnist
-import models.cnn
+from datasets import mnist
+from models import cnn
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
