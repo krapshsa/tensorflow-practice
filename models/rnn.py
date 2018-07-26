@@ -75,15 +75,15 @@ def model(features, labels, mode, params):
     }
 
     # Calculate loss using softmax cross entropy
-    #loss = tf.losses.sparse_softmax_cross_entropy(
-    #    labels=labels,
-    #    logits=logits
-    #)
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        logits=logits,
-        labels=labels
+    loss = tf.losses.sparse_softmax_cross_entropy(
+        labels=labels,
+        logits=logits
     )
-    loss = tf.reduce_mean(cross_entropy)
+    #cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+    #    logits=logits,
+    #    labels=labels
+    #)
+    #loss = tf.reduce_mean(cross_entropy)
 
     tf.summary.scalar('loss', loss)
 

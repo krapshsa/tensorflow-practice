@@ -71,13 +71,15 @@ def get_params():
     return hparams
 
 
-def parse_label_column(label_string_tensor, label_array):
-    table = tf.contrib.lookup.index_table_from_tensor(tf.constant(label_array))
-    return table.lookup(label_string_tensor)
-
-
 def make_input_fn(mode, params):
     """Returns an input function to read the dataset."""
+    def parse_label_column(label_string_tensor):
+        table = tf.contrib.lookup.index_table_from_tensor(
+            tf.constant(params.string_labels),
+            name='target-labels'
+        )
+        return table.lookup(label_string_tensor)
+
     def _input_fn():
         dataset = DATASETS[FLAGS.dataset].read(mode)
         dataset = dataset.batch(params.batch_size)
@@ -93,7 +95,7 @@ def make_input_fn(mode, params):
 
         iterator = dataset.make_one_shot_iterator()
         features, labels = iterator.get_next()
-        return features, parse_label_column(labels, ['P01', 'P02', 'P03', 'P04'])
+        return features, parse_label_column(labels)
 
     return _input_fn
 
