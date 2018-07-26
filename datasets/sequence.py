@@ -19,6 +19,7 @@ RESUME_TRAINING = False
 MULTI_THREADING = True
 SKIP_DATA_GENERATION = False
 NUM_CLASSES = 4
+TARGET_LABELS = ['P01', 'P02', 'P03', 'P04']
 
 NOISE_RANGE = .5
 TREND = 10.
@@ -30,6 +31,8 @@ def get_params():
     """Dataset params."""
     params = {
         "num_classes": NUM_CLASSES,
+        "sequence_len": SEQUENCE_LENGTH,
+        "string_labels": TARGET_LABELS
     }
     return params
 
@@ -71,10 +74,10 @@ def prepare():
 
     struct = ['creator', 'label']
     sequences = [
-       [create_sequence_1, 'P01'],
-       [create_sequence_2, 'P02'],
-       [create_sequence_3, 'P03'],
-       [create_sequence_4, 'P04']
+       [create_sequence_1, TARGET_LABELS[0]],
+       [create_sequence_2, TARGET_LABELS[1]],
+       [create_sequence_3, TARGET_LABELS[2]],
+       [create_sequence_4, TARGET_LABELS[3]]
     ]
     sequences = [dict(zip(struct, sequence)) for sequence in sequences]
 

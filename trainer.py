@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import multiprocessing
 import tensorflow as tf
 from datasets import mnist, sequence
 from models import cnn, rnn
@@ -84,9 +85,10 @@ def make_input_fn(mode, params):
             dataset = dataset.repeat()
             dataset = dataset.shuffle(params.batch_size * 5)
 
+        num_threads = multiprocessing.cpu_count()
         dataset = dataset.map(
             DATASETS[FLAGS.dataset].parse,
-            num_parallel_calls=8
+            num_parallel_calls=num_threads
         )
 
         iterator = dataset.make_one_shot_iterator()

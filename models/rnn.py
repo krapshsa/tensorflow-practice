@@ -24,12 +24,10 @@ def get_params():
 
 def model(features, labels, mode, params):
     """CNN classifier model."""
-    SEQUENCE_LENGTH = 10
-    TARGET_LABELS = ['P01', 'P02', 'P03', 'P04']
-    # 0. Reformat input shape to become a sequence
-    inputs = tf.split(features['values'], SEQUENCE_LENGTH, 1)
+    # Reformat input shape to become a sequence
+    inputs = tf.split(features['values'], params.sequence_len, 1)
 
-    ## 1. configure the RNN
+    # configure the RNN
     rnn_layers = [
         tf.nn.rnn_cell.LSTMCell(
             num_units=size,
@@ -59,14 +57,14 @@ def model(features, labels, mode, params):
     predicted_indices = tf.argmax(input=logits, axis=1)
     probabilities = tf.nn.softmax(logits, name='softmax_tensor')
     predictions = {
-        'class': tf.gather(TARGET_LABELS, predicted_indices),
+        'class': tf.gather(params.string_labels, predicted_indices),
         'probabilities': probabilities
     }
 
     # Return accuracy and area under ROC curve metrics
     labels_one_hot = tf.one_hot(
-        labels,
-        depth=len(TARGET_LABELS),
+        indices=labels,
+        depth=len(params.string_labels),
         on_value=True,
         off_value=False,
         dtype=tf.bool
@@ -76,17 +74,17 @@ def model(features, labels, mode, params):
         'auroc': tf.metrics.auc(labels_one_hot, probabilities)
     }
 
+    # Calculate loss using softmax cross entropy
     #loss = tf.losses.sparse_softmax_cross_entropy(
     #    labels=labels,
     #    logits=logits
     #)
-    # Calculate loss using softmax cross entropy
-    loss = tf.reduce_mean(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=logits,
-            labels=labels
-        )
+    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=logits,
+        labels=labels
     )
+    loss = tf.reduce_mean(cross_entropy)
+
     tf.summary.scalar('loss', loss)
 
     return predictions, eval_metric_ops, loss
