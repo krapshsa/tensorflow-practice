@@ -10,14 +10,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import multiprocessing
 import tensorflow as tf
-from datasets import mnist
-from models import cnn
+from datasets import mnist, sequence
+from models import cnn, rnn
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-tf.flags.DEFINE_string("model",         "cnn",                  "Model name.")
-tf.flags.DEFINE_string("dataset",       "mnist",                "Dataset name.")
+tf.flags.DEFINE_string("model",         "rnn",                  "Model name.")
+tf.flags.DEFINE_string("dataset",       "sequence",             "Dataset name.")
 tf.flags.DEFINE_string("output_dir",    "",                     "Optional output dir.")
 tf.flags.DEFINE_string("schedule",      "train_and_evaluate",   "Schedule.")
 tf.flags.DEFINE_string("hparams",       "",                     "Hyper parameters.")
@@ -34,14 +35,16 @@ MODELS = {
     # This is a dictionary of models, the keys are model names, and the values
     # are the module containing get_params, model, and eval_metrics.
     # Example: "cnn": cnn
-    "cnn": cnn
+    "cnn": cnn,
+    "rnn": rnn
 }
 
 DATASETS = {
     # This is a dictionary of datasets, the keys are dataset names, and the
     # values are the module containing get_params, prepare, read, and parse.
     # Example: "mnist": mnist
-    "mnist": mnist
+    "mnist": mnist,
+    "sequence": sequence
 }
 
 HPARAMS = {
@@ -70,21 +73,29 @@ def get_params():
 
 def make_input_fn(mode, params):
     """Returns an input function to read the dataset."""
+    def parse_label_column(label_string_tensor):
+        table = tf.contrib.lookup.index_table_from_tensor(
+            tf.constant(params.string_labels),
+            name='target-labels'
+        )
+        return table.lookup(label_string_tensor)
+
     def _input_fn():
         dataset = DATASETS[FLAGS.dataset].read(mode)
+        dataset = dataset.batch(params.batch_size)
         if mode == tf.estimator.ModeKeys.TRAIN:
             dataset = dataset.repeat()
             dataset = dataset.shuffle(params.batch_size * 5)
 
+        num_threads = multiprocessing.cpu_count()
         dataset = dataset.map(
             DATASETS[FLAGS.dataset].parse,
-            num_parallel_calls=8
+            num_parallel_calls=num_threads
         )
 
-        dataset = dataset.batch(params.batch_size)
         iterator = dataset.make_one_shot_iterator()
         features, labels = iterator.get_next()
-        return features, labels
+        return features, parse_label_column(labels)
 
     return _input_fn
 
