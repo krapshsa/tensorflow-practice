@@ -118,6 +118,7 @@ def read(split):
 
     return dataset
 
+
 def parse(csv_row):
     DEFAULTS = [[0.0] for i in range(0, SEQUENCE_LENGTH)] + [['']]
     # sequence is a list of tensors
